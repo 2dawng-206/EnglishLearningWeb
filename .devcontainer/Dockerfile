@@ -10,11 +10,15 @@ FROM mcr.microsoft.com/devcontainers/typescript-node:24-bookworm
 # `default-mysql-client` is Debian's own metapackage (resolves to the
 # MariaDB client, which is wire-compatible with MySQL) — no need to add
 # Oracle's APT repo just for a CLI tool in a course project.
+#
+# Git LFS — repo is configured for it (pre-push hook), so install it in the
+# image itself rather than relying on each contributor doing it manually.
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt-get install -y --no-install-recommends default-mysql-client && \
+    apt-get install -y --no-install-recommends default-mysql-client git-lfs && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    git lfs install --system
 
 # Nest CLI — shared across the whole repo, so it lives in the image rather
 # than in either app's package.json.
