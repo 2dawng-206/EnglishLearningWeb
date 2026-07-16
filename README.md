@@ -20,16 +20,25 @@ FRONTEND_URL=https://special-yodel-r499qv74w4vcpgwr-5173.app.github.dev
 DB_SSL_CA_PATH=./certs/ca.pem
 
 # Aiven MySQL
+
 DB_HOST=
+
 DB_PORT=
+
 DB_DATABASE=
+
 DB_USERNAME=
+
 DB_PASSWORD=
+
 DB_SSL=true
 
 JWT_ACCESS_SECRET=
+
 JWT_REFRESH_SECRET=
+
 JWT_EXPIRES_IN=15m
+
 JWT_REFRESH_EXPIRES_IN=7d
 
 DICTIONARY_API_BASE_URL=https://api.dictionaryapi.dev/api/v2/entries/en
