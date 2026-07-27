@@ -85,7 +85,7 @@ Tính minh bạch (Transparency): Người dùng cần được biết dữ li�
 
 Cách phối hợp cũng như làm việc trong nhóm:
 
-Tuân thủ tiêu chuẩn Code và Tài liệu hóa (Practice): Nhóm phải biết nhận thức và tuân thủ các tiêu chuẩn nghề nghiệp, tiêu chuẩn code và tài liệu hóa. Nhóm sử dụng TypeScript chặt chẽ cùng các hàm cốt lõi như tính điểm XP, chuỗi học (streak) đều được tách thành hàm thuần túy (pure functions).
+Tuân thủ tiêu chuẩn Code và Tài liệu hóa (Practice): Nhóm nhận thức và tuân thủ các tiêu chuẩn nghề nghiệp, tiêu chuẩn code và tài liệu hóa. Nhóm sử dụng TypeScript chặt chẽ cùng các hàm cốt lõi như tính điểm XP, chuỗi học (streak) đều được tách thành hàm thuần túy (pure functions).
 
 Làm việc nhóm và Quản lý quy trình: Trách nhiệm vai trò cá nhân được chia rõ (front end, backend) và sử dụng hệ thống điều khiển kho chứa mã nguồn (Git). Repo dự án được tổ chức rõ ràng thành 2 thư mục độc lập frontend/ và backend/ chung một repo Git để dễ phối hợp.
 

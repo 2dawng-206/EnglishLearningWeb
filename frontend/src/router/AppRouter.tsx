@@ -10,6 +10,9 @@ import { FlashcardSessionPage } from '../pages/study/FlashcardSessionPage';
 import { QuizSessionPage } from '../pages/study/QuizSessionPage';
 import { PronunciationSessionPage } from '../pages/study/PronunciationSessionPage';
 import { ProtectedRoute } from '../routes/ProtectedRoute';
+import { AdminWordsPage } from '../pages/admin/AdminWordsPage';
+import { AdminWordFormPage } from '../pages/admin/AdminWordFormPage';
+import { AdminRoute } from '../routes/AdminRoute';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +35,30 @@ export const router = createBrowserRouter([
       { path: '/study/flashcards', element: <FlashcardSessionPage /> },
       { path: '/study/quiz', element: <QuizSessionPage /> },
       { path: '/study/pronunciation', element: <PronunciationSessionPage /> },
+      {
+        path: '/admin/words',
+        element: (
+          <AdminRoute>
+            <AdminWordsPage />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: '/admin/words/new',
+        element: (
+          <AdminRoute>
+            <AdminWordFormPage />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: '/admin/words/:id/edit',
+        element: (
+          <AdminRoute>
+            <AdminWordFormPage />
+          </AdminRoute>
+        ),
+      },
     ],
   },
   { path: '/', element: <Navigate to="/dashboard" replace /> },
