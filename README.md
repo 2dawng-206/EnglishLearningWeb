@@ -1,3 +1,11 @@
+# 📚 VocabMaster
+
+> A modern English vocabulary learning platform built with React, NestJS and MySQL.
+
+![GitHub stars](https://img.shields.io/github/stars/...)
+![GitHub forks](https://img.shields.io/github/forks/...)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 Bắt đầu (máy mới hoặc Codespace mới)
 
 
