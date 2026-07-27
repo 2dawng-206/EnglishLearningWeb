@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuthStore } from '../../features/auth/auth-store';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -6,11 +7,16 @@ const navItems = [
   { to: '/study', label: 'Study' },
 ];
 
+const adminNavItems = [{ to: '/admin/words', label: 'Manage' }];
+
 export function Sidebar() {
+  const role = useAuthStore((state) => state.user?.role);
+  const items = role === 'admin' ? [...navItems, ...adminNavItems] : navItems;
+
   return (
     <nav className="w-56 shrink-0 border-r border-paper-300 bg-paper-50 px-3 py-6">
       <ul className="flex flex-col gap-1">
-        {navItems.map((item) => (
+        {items.map((item) => (
           <li key={item.to}>
             <NavLink
               to={item.to}
