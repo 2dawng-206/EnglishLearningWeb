@@ -1,101 +1,117 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { ReviewHistory } from '../progress/entities/review-history.entity';
-import { calculateLevel, xpForQuality } from './xp-level';
-import { computeStreakUpdate, todayDateString } from './streak';
-import type { DailyActivity } from './daily-activity.type';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { EntityManager, Repository } from "typeorm";
+import { User } from "../users/entities/user.entity";
+import { ReviewHistory } from "../progress/entities/review-history.entity";
+import { UserProgress } from "../progress/entities/user-progress.entity";
+import { Sm2Service } from "../progress/sm2/sm2.service";
+import { xpForQuality, calculateLevel } from "./xp-level";
+import { computeStreakUpdate, todayDateString, StreakState } from "./streak";
+import { DailyActivity } from "./daily-activity.type";
 
-const ACTIVITY_WINDOW_DAYS = 7;
-const MS_PER_MINUTE = 60_000;
-
-export interface RecordReviewParams {
-  userId: number;
-  quality: number;
-  justMastered: boolean;
-}
+const WEEKLY_WINDOW_DAYS = 7;
 
 @Injectable()
 export class GamificationService {
   constructor(
-    @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    @InjectRepository(ReviewHistory)
-    private readonly reviewHistoryRepository: Repository<ReviewHistory>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
-  /**
-   * Must be called with the SAME transactional EntityManager that
-   * ProgressService.submitReview() uses for its own writes — XP/streak
-   * updates and the review they're derived from need to commit together.
-   */
-  async recordReview(manager: EntityManager, params: RecordReviewParams): Promise<void> {
-    const user = await manager.findOneOrFail(User, { where: { id: params.userId } });
+  async recordReview(
+    manager: EntityManager,
+    userId: number,
+    quality: number,
+    isCorrect: boolean,
+    justMastered: boolean,
+  ): Promise<void> {
+    const user = await manager.findOneByOrFail(User, { id: userId });
 
-    const newXp = user.xp + xpForQuality(params.quality);
-    const streakUpdate = computeStreakUpdate(user, todayDateString());
+    const currentStreak: StreakState = {
+      streakCurrent: user.streakCurrent,
+      streakLongest: user.streakLongest,
+      streakLastStudiedDate: user.streakLastStudiedDate,
+      streakFreezes: user.streakFreezes,
+    };
+    const updatedStreak = computeStreakUpdate(currentStreak, todayDateString());
 
-    await manager.update(User, params.userId, {
-      xp: newXp,
-      level: calculateLevel(newXp),
-      streakCurrent: streakUpdate.streakCurrent,
-      streakLongest: streakUpdate.streakLongest,
-      streakLastStudiedDate: streakUpdate.streakLastStudiedDate,
-      streakFreezes: streakUpdate.streakFreezes,
-      statTotalAnswers: user.statTotalAnswers + 1,
-      statCorrectAnswers: user.statCorrectAnswers + (params.quality >= 3 ? 1 : 0),
-      statWordsLearned: user.statWordsLearned + (params.justMastered ? 1 : 0),
-    });
+    user.xp += xpForQuality(quality);
+    user.level = calculateLevel(user.xp);
+    user.streakCurrent = updatedStreak.streakCurrent;
+    user.streakLongest = updatedStreak.streakLongest;
+    user.streakLastStudiedDate = updatedStreak.streakLastStudiedDate;
+    user.streakFreezes = updatedStreak.streakFreezes;
+    user.statTotalAnswers += 1;
+    if (isCorrect) user.statCorrectAnswers += 1;
+    if (justMastered) user.statWordsLearned += 1;
+
+    await manager.save(user);
   }
 
-  /** Called once per finished study session (not per card) — see the frontend's useStudySession. */
-  async recordSessionComplete(userId: number, durationMs: number): Promise<void> {
-    const minutesStudied = Math.max(1, Math.round(durationMs / MS_PER_MINUTE));
-    // Atomic increments — no read-modify-write race here, unlike recordReview
-    // which needs the current streak state to compute its next state anyway.
-    await this.usersRepository.increment({ id: userId }, 'statReviewSessions', 1);
-    await this.usersRepository.increment({ id: userId }, 'statStudyTimeMinutes', minutesStudied);
-  }
-
-  async getWeeklyActivity(userId: number): Promise<DailyActivity[]> {
-    const windowStart = new Date();
-    windowStart.setUTCDate(windowStart.getUTCDate() - (ACTIVITY_WINDOW_DAYS - 1));
-    windowStart.setUTCHours(0, 0, 0, 0);
-
-    const rows = await this.reviewHistoryRepository
-      .createQueryBuilder('review')
-      .innerJoin('review.userProgress', 'progress')
-      .select('DATE(review.reviewedAt)', 'date')
-      .addSelect('COUNT(*)', 'totalReviews')
-      .addSelect('SUM(CASE WHEN review.quality >= 3 THEN 1 ELSE 0 END)', 'correctReviews')
-      .where('progress.userId = :userId', { userId })
-      .andWhere('review.reviewedAt >= :windowStart', { windowStart })
-      .groupBy('DATE(review.reviewedAt)')
-      .getRawMany<{ date: string; totalReviews: string; correctReviews: string }>();
-
-    const byDate = new Map(
-      rows.map((row) => [
-        // mysql2 can return DATE() results as a Date object or a string
-        // depending on driver config — normalize defensively either way.
-        typeof row.date === 'string' ? row.date : new Date(row.date).toISOString().slice(0, 10),
-        { totalReviews: Number(row.totalReviews), correctReviews: Number(row.correctReviews) },
-      ]),
+  async recordSessionComplete(
+    userId: number,
+    durationMs: number,
+  ): Promise<void> {
+    const minutes = Math.max(1, Math.round(durationMs / 60_000));
+    await this.userRepo.increment({ id: userId }, "statReviewSessions", 1);
+    await this.userRepo.increment(
+      { id: userId },
+      "statStudyTimeMinutes",
+      minutes,
     );
+  }
 
-    // Always return exactly ACTIVITY_WINDOW_DAYS entries, zero-filled, so
-    // the chart has a consistent shape even on days with no activity.
-    const days: DailyActivity[] = [];
-    for (let i = ACTIVITY_WINDOW_DAYS - 1; i >= 0; i--) {
-      const day = new Date();
-      day.setUTCDate(day.getUTCDate() - i);
-      const dateString = day.toISOString().slice(0, 10);
-      const found = byDate.get(dateString);
-      days.push({
-        date: dateString,
-        totalReviews: found?.totalReviews ?? 0,
-        correctReviews: found?.correctReviews ?? 0,
+  /**
+   * Last 7 calendar UTC days (including today), zero-filled so the chart
+   * always has a consistent 7-entry shape even on days with no activity.
+   * "Correct" vs "missed" is derived from quality >= PASSING_QUALITY, the
+   * same threshold ProgressService.submitReview() already uses.
+   */
+  async getWeeklyActivity(userId: number): Promise<DailyActivity[]> {
+    const since = new Date();
+    since.setUTCDate(since.getUTCDate() - (WEEKLY_WINDOW_DAYS - 1));
+    since.setUTCHours(0, 0, 0, 0);
+
+    const rows: { date: string | Date; total: string; correct: string }[] =
+      await this.userRepo.manager
+        .createQueryBuilder(ReviewHistory, "rh")
+        .innerJoin(UserProgress, "up", "up.id = rh.userProgressId")
+        .select("DATE(rh.reviewedAt)", "date")
+        .addSelect("COUNT(*)", "total")
+        .addSelect(
+          `SUM(CASE WHEN rh.quality >= :passing THEN 1 ELSE 0 END)`,
+          "correct",
+        )
+        .where("up.userId = :userId", { userId })
+        .andWhere("rh.reviewedAt >= :since", { since })
+        .setParameter("passing", Sm2Service.PASSING_QUALITY)
+        .groupBy("DATE(rh.reviewedAt)")
+        .getRawMany();
+
+    const byDate = new Map<string, { total: number; correct: number }>();
+    for (const row of rows) {
+      const dateStr =
+        row.date instanceof Date
+          ? row.date.toISOString().slice(0, 10)
+          : String(row.date);
+      byDate.set(dateStr, {
+        total: Number(row.total),
+        correct: Number(row.correct),
       });
     }
-    return days;
+
+    const result: DailyActivity[] = [];
+    for (let i = WEEKLY_WINDOW_DAYS - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const entry = byDate.get(dateStr);
+      result.push({
+        date: dateStr,
+        totalReviews: entry?.total ?? 0,
+        correctReviews: entry?.correct ?? 0,
+      });
+    }
+
+    return result;
   }
 }

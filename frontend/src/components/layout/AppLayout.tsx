@@ -1,6 +1,7 @@
-import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
+import { Suspense } from "react";
+import { Outlet } from "react-router-dom";
+import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
 
 export function AppLayout() {
   return (
@@ -9,7 +10,11 @@ export function AppLayout() {
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 p-8">
-          <Outlet />
+          <Suspense
+            fallback={<p className="font-body text-ink-700">Loading…</p>}
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

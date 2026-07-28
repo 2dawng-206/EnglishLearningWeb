@@ -5,7 +5,7 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
-import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { DashboardPage } from './lazy-dashboard';
 import { VocabularyPage } from '../pages/vocabulary/VocabularyPage';
 import { StudyPage } from '../pages/study/StudyPage';
 import { SettingsPage } from '../pages/Settings/SettingsPage';

@@ -1,4 +1,10 @@
+// pages/dashboard/DashboardPage.tsx
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../../features/auth/auth-store";
+import { fetchWeeklyActivity } from "../../features/gamification/gamification-api";
+import { LevelProgressBar } from "../../components/dashboard/LevelProgressBar";
+import { WeeklyActivityChart } from "../../components/dashboard/WeeklyActivityChart";
+import type { DailyActivity } from "../../types/gamification";
 
 interface StatCardProps {
   label: string;
@@ -23,6 +29,24 @@ function StatCard({ label, value, accent = false }: StatCardProps) {
 
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const [weeklyActivity, setWeeklyActivity] = useState<DailyActivity[] | null>(
+    null,
+  );
+  const [activityError, setActivityError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchWeeklyActivity()
+      .then((data) => {
+        if (!cancelled) setWeeklyActivity(data);
+      })
+      .catch(() => {
+        if (!cancelled) setActivityError("Couldn't load weekly activity.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!user) return null; // ProtectedRoute guarantees this shouldn't happen
 
@@ -42,6 +66,8 @@ export function DashboardPage() {
         </p>
       </div>
 
+      <LevelProgressBar xp={user.xp} />
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard
           label="Current streak"
@@ -54,6 +80,19 @@ export function DashboardPage() {
           label="Accuracy"
           value={accuracy === null ? "—" : `${accuracy}%`}
         />
+      </div>
+
+      <div>
+        <h2 className="font-display text-lg font-semibold text-ink-950">
+          This week
+        </h2>
+        {activityError && (
+          <p className="mt-2 font-body text-sm text-red-600">{activityError}</p>
+        )}
+        {!activityError && !weeklyActivity && (
+          <p className="mt-2 font-body text-sm text-ink-700">Loading…</p>
+        )}
+        {weeklyActivity && <WeeklyActivityChart data={weeklyActivity} />}
       </div>
     </div>
   );
