@@ -8,7 +8,7 @@ import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { VocabularyPage } from '../pages/vocabulary/VocabularyPage';
 import { StudyPage } from '../pages/study/StudyPage';
-import { SettingsPage } from '../pages/settings/SettingsPage';
+import { SettingsPage } from '../pages/Settings/SettingsPage';
 import { FlashcardSessionPage } from '../pages/study/FlashcardSessionPage';
 import { QuizSessionPage } from '../pages/study/QuizSessionPage';
 import { PronunciationSessionPage } from '../pages/study/PronunciationSessionPage';
