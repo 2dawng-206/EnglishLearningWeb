@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { MailService } from '../mail/mail.service';
 
 // Phai khop voi SALT_ROUNDS trong AuthService (modules/auth/auth.service.ts)
 // de moi hash mat khau trong he thong nhat quan.
@@ -27,6 +28,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly mailService: MailService,
   ) {}
 
   async create(data: CreateUserData): Promise<User> {
@@ -104,5 +106,40 @@ export class UsersService {
     // khoi cac thiet bi/session khac, chi con phien vua doi mat khau la
     // con hieu luc (thong qua access token dang dung, se het han sau it phut).
     await this.updateRefreshToken(id, null);
+
+    // Bao khong chan luong chinh: neu gui mail loi (SMTP down...) thi
+    // nguoi dung van doi mat khau thanh cong binh thuong, chi la khong
+    // nhan duoc mail thong bao. Khong throw ra ngoai o day.
+    this.mailService.sendPasswordChangedEmail(user.email, user.username).catch(() => {});
+  }
+
+  // ── Quen mat khau / dat lai qua email ─────────────────────
+
+  async setPasswordResetToken(id: number, tokenHash: string, expiresAt: Date): Promise<void> {
+    await this.usersRepository.update(id, {
+      passwordResetToken: tokenHash,
+      passwordResetExpires: expiresAt,
+    });
+  }
+
+  // passwordResetToken/Expires co select:false tren entity - phai addSelect
+  // thu cong. Tim theo hash cua token (khong phai token tho) va con han.
+  findByValidPasswordResetToken(tokenHash: string): Promise<User | null> {
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect(['user.passwordResetToken', 'user.passwordResetExpires'])
+      .where('user.passwordResetToken = :tokenHash', { tokenHash })
+      .andWhere('user.passwordResetExpires > :now', { now: new Date() })
+      .getOne();
+  }
+
+  async resetPasswordViaToken(id: number, newPassword: string): Promise<void> {
+    const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await this.usersRepository.update(id, {
+      password: newPasswordHash,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+      refreshToken: null, // dang xuat khoi moi thiet bi, giong changePassword()
+    });
   }
 }
