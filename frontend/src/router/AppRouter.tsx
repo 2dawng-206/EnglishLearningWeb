@@ -3,9 +3,12 @@ import { AuthLayout } from '../components/layout/AuthLayout';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { VocabularyPage } from '../pages/vocabulary/VocabularyPage';
 import { StudyPage } from '../pages/study/StudyPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
 import { FlashcardSessionPage } from '../pages/study/FlashcardSessionPage';
 import { QuizSessionPage } from '../pages/study/QuizSessionPage';
 import { PronunciationSessionPage } from '../pages/study/PronunciationSessionPage';
@@ -20,6 +23,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
     ],
   },
   {
@@ -35,6 +40,7 @@ export const router = createBrowserRouter([
       { path: '/study/flashcards', element: <FlashcardSessionPage /> },
       { path: '/study/quiz', element: <QuizSessionPage /> },
       { path: '/study/pronunciation', element: <PronunciationSessionPage /> },
+      { path: '/settings', element: <SettingsPage /> },
       {
         path: '/admin/words',
         element: (
