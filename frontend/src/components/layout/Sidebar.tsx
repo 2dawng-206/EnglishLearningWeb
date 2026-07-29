@@ -5,6 +5,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/vocabulary', label: 'Vocabulary' },
   { to: '/study', label: 'Study' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 const adminNavItems = [{ to: '/admin/words', label: 'Manage' }];
