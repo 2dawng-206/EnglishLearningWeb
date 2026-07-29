@@ -1,6 +1,5 @@
-Index · CSS
 @import "tailwindcss";
- 
+
 /*
   Tailwind v4 doesn't ship a config file — dark mode is enabled here via a
   custom variant instead of `darkMode: 'class'`. Any `dark:` utility now
@@ -8,7 +7,7 @@ Index · CSS
   toggled by useThemeSync() based on the user's settingTheme preference.
 */
 @custom-variant dark (&:where(.dark, .dark *));
- 
+
 /*
   Design tokens — "ink and amber":
   - ink: deep navy-black, like dried fountain ink (not neutral black)
@@ -22,30 +21,30 @@ Index · CSS
   --color-ink-800: #1b2740;
   --color-ink-700: #283754;
   --color-ink-600: #3c4f74;
- 
+
   --color-paper-50: #f7f5ef;
   --color-paper-100: #edeae0;
   --color-paper-300: #cfc9b8;
- 
+
   --color-amber-300: #f0c179;
   --color-amber-400: #e8a94b;
   --color-amber-600: #c9822b;
   --color-amber-700: #9c621e;
- 
+
   --color-sage-400: #7fa894;
   --color-sage-600: #547862;
- 
+
   --font-display: "Zilla Slab", ui-serif, Georgia, serif;
   --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
- 
+
 body {
   font-family: var(--font-body);
   background-color: var(--color-paper-50);
   color: var(--color-ink-950);
 }
- 
+
 /* Base dark-mode page background/text — reuses the existing ink/paper
    scale in reverse rather than introducing a whole new palette. Individual
    components (Header, Sidebar, cards, etc.) still need their own `dark:`
@@ -54,13 +53,13 @@ body {
   background-color: var(--color-ink-950);
   color: var(--color-paper-100);
 }
- 
+
 /* Visible keyboard focus everywhere — never suppressed. */
 :focus-visible {
   outline: 2px solid var(--color-amber-600);
   outline-offset: 2px;
 }
- 
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -70,4 +69,3 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
- 

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { RouterProvider } from 'react-router-dom';
-import { router } from './router/AppRouter';
-import { bootstrapSession } from './features/auth/auth-api';
+import { useEffect } from "react";
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router/AppRouter";
+import { bootstrapSession } from "./features/auth/auth-api";
+import { useThemeSync } from "./hooks/useThemeSync";
 
 export default function App() {
   useEffect(() => {
@@ -11,6 +12,10 @@ export default function App() {
     // produces while it's in flight.
     void bootstrapSession();
   }, []);
+
+  // Keeps <html class="dark"> in sync with the signed-in user's
+  // settingTheme preference (light/dark/system). See useThemeSync.ts.
+  useThemeSync();
 
   return <RouterProvider router={router} />;
 }
